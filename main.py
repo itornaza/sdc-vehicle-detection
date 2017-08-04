@@ -36,7 +36,8 @@ if __name__ == '__main__':
     command = parseCommands()
     if command == Commands.DATA:
         print(">>> Data exploration")
-        data_prep()
+        # TODO: Finish data preparation
+        data_prep(vis=True)
     elif command == Commands.IMAGE:
         print(">>> Single image processing")
         exploratory_pipeline()

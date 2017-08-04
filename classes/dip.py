@@ -113,37 +113,15 @@ class dip():
         # Return the feature vector
         return features
 
-    def data_look(car_list, notcar_list):
-        '''Returns some characteristics of the dataset'''
-        
-        data_dict = {}
-        
-        # Define a key in data_dict "n_cars" and store the number of car images
-        data_dict["n_cars"] = len(car_list)
-        
-        # Define a key "n_notcars" and store the number of notcar images
-        data_dict["n_notcars"] = len(notcar_list)
-        
-        # Read in a test image, either car or notcar
-        example_img = mpimg.imread(car_list[0])
-        
-        # Define a key "image_shape" and store the test image shape 3-tuple
-        data_dict["image_shape"] = example_img.shape
-        
-        # Define a key "data_type" and store the data type of the test image.
-        data_dict["data_type"] = example_img.dtype
-        
-        # Return data_dict
-        return data_dict
-
     def get_hog_features(img, orient, pix_per_cell, cell_per_block, vis=False, feature_vec=True):
         '''Returns HOG features and visualization'''
-
+        
         if vis == True:
             features, hog_image = hog(img,
                                       orientations=orient,
                                       pixels_per_cell=(pix_per_cell, pix_per_cell),
                                       cells_per_block=(cell_per_block, cell_per_block),
+                                      block_norm = 'L2-Hys',
                                       transform_sqrt=False,
                                       visualise=True,
                                       feature_vector=False)
@@ -153,6 +131,7 @@ class dip():
                            orientations=orient,
                            pixels_per_cell=(pix_per_cell, pix_per_cell),
                            cells_per_block=(cell_per_block, cell_per_block),
+                           block_norm = 'L2-Hys',
                            transform_sqrt=False,
                            visualise=False,
                            feature_vector=feature_vec)
