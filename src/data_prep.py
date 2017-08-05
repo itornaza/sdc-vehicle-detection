@@ -9,6 +9,17 @@ from sklearn.preprocessing import StandardScaler
 
 from dip import dip
 
+
+#-----------------------
+# Hog hyper-parameters
+#-----------------------
+
+COLORSPACE = 'RGB' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
+ORIENT = 9
+PIX_PER_CELL = 8
+CELL_PER_BLOCK = 2
+HOG_CHANNEL = 0 # Can be 0, 1, 2, or "ALL"
+
 def _get_data_from_file():
     '''
     Reads the images from the ./dataset directory and 
@@ -91,36 +102,50 @@ def _hog(car_image):
     # Convert image to grayscale
     gray = cv2.cvtColor(car_image, cv2.COLOR_RGB2GRAY)
     
-    # Define HOG parameters
-    orient = 9
-    pix_per_cell = 8
-    cell_per_block = 2
+    # Define HOG parameters from the globals
+    orient = ORIENT
+    pix_per_cell = PIX_PER_CELL
+    cell_per_block = CELL_PER_BLOCK
 
     # Hog processing
-    features, hog_image = dip.get_hog_features(gray, orient,
+    features, hog_image = dip.get_hog_features(gray,
+                                               orient,
                                                pix_per_cell,
                                                cell_per_block,
                                                vis=True,
                                                feature_vec=False)
-
+   # Return the features and the image
     return features, hog_image
 
 def _get_combined_features(cars, notcars):
     '''Get the features for the cars and notcars list of images in a combined fashion'''
     
-    # TODO: Tweak these parameters and see how the results change.
-    colorspace = 'RGB' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
-    orient = 9
-    pix_per_cell = 8
-    cell_per_block = 2
-    hog_channel = 0 # Can be 0, 1, 2, or "ALL"
+    # Hog parameters set up from globals
+    colorspace = COLORSPACE
+    orient = ORIENT
+    pix_per_cell = PIX_PER_CELL
+    cell_per_block = CELL_PER_BLOCK
+    hog_channel = HOG_CHANNEL
 
-    #car_features = dip.extract_features(cars, cspace=colorspace, orient=orient, pix_per_cell=pix_per_cell, cell_per_block=cell_per_block, hog_channel=hog_channel)
-    #notcar_features = dip.extract_features(notcars, cspace=colorspace, orient=orient, pix_per_cell=pix_per_cell, cell_per_block=cell_per_block, hog_channel=hog_channel)
-    
-    ### TODO: uncomment and test:
+    # Get the features from the color filter
     car_features = dip.extract_color_features(cars)
     notcar_features = dip.extract_color_features(notcars)
+    
+    # Get the features from the hog filter
+    car_features_hog = dip.extract_hog_features(cars, cspace=colorspace,
+                                                orient=orient,
+                                                pix_per_cell=pix_per_cell,
+                                                cell_per_block=cell_per_block,
+                                                hog_channel=hog_channel)
+    notcar_features_hog = dip.extract_hog_features(notcars, cspace=colorspace,
+                                                   orient=orient,
+                                                   pix_per_cell=pix_per_cell,
+                                                   cell_per_block=cell_per_block,
+                                                   hog_channel=hog_channel)
+
+    # TODO: combine all filters features
+    np.append(car_features, car_features_hog)
+    np.append(notcar_features, notcar_features_hog)
     
     print('>>> Using:',orient,'orientations',pix_per_cell,
           'pixels per cell and', cell_per_block,'cells per block')

@@ -78,7 +78,7 @@ class dip():
         
         # Concatenate the histograms into a single feature vector
         hist_features = np.concatenate((channel1_hist[0], channel2_hist[0], channel3_hist[0]))
-    
+        
         # Return the individual histograms, bin_centers and feature vector
         return hist_features
 
@@ -125,7 +125,7 @@ class dip():
                                       block_norm = 'L2-Hys',
                                       transform_sqrt=True,
                                       visualise=vis,
-                                      feature_vector=False)
+                                      feature_vector=feature_vec)
             return features, hog_image
         else:
             features = hog(img,
@@ -138,8 +138,8 @@ class dip():
                            feature_vector=feature_vec)
             return features
 
-    def extract_features(imgs, cspace='RGB', orient=9,
-                         pix_per_cell=8, cell_per_block=2, hog_channel=0):
+    def extract_hog_features(imgs, cspace='RGB', orient=9,
+                             pix_per_cell=8, cell_per_block=2, hog_channel=0):
         '''Extracts both color and hog features'''
         
         # Create a list to append feature vectors to
