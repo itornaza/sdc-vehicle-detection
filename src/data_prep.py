@@ -1,6 +1,5 @@
 import cv2
 import glob
-import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -8,17 +7,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 from dip import dip
+from parameters import Prms
 
-
-#-----------------------
 # Hog hyper-parameters
-#-----------------------
-
-COLORSPACE = 'RGB' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
-ORIENT = 9
-PIX_PER_CELL = 8
-CELL_PER_BLOCK = 2
-HOG_CHANNEL = 0 # Can be 0, 1, 2, or "ALL"
+COLORSPACE = Prms.COLORSPACE
+ORIENT = Prms.ORIENT
+PIX_PER_CELL = Prms.PIX_PER_CELL
+CELL_PER_BLOCK = Prms.CELL_PER_BLOCK
+HOG_CHANNEL = Prms.HOG_CHANNEL
 
 def _get_data_from_file():
     '''
@@ -59,7 +55,7 @@ def _get_data_from_file():
 
 def _data_look(car_list, notcar_list):
     '''Returns some characteristics of the dataset'''
-        
+    
     data_dict = {}
     
     # Define a key in data_dict "n_cars" and store the number of car images
@@ -80,13 +76,13 @@ def _data_look(car_list, notcar_list):
     # Return data_dict
     return data_dict
 
-def _show_stats(data_info):
-    print('>>> Your function returned a count of', data_info["n_cars"], ' cars and',
-          data_info["n_notcars"], ' non-cars')
-    print('of size: ',data_info["image_shape"], ' and data type:', data_info["data_type"])
-
 def _get_random_images(cars, notcars):
-    # Just for fun choose random car / not-car indices and plot example images
+    '''
+    Returns a random image for each of the cars and nptcars lists 
+    as well as the random index for the car list
+    '''
+    
+    # Just for fun choose random car / not-car indices
     car_ind = np.random.randint(0, len(cars))
     notcar_ind = np.random.randint(0, len(notcars))
     
@@ -94,11 +90,14 @@ def _get_random_images(cars, notcars):
     car_image = cv2.imread(cars[car_ind])
     notcar_image = cv2.imread(notcars[notcar_ind])
 
+    # Return the images and the random index as well
     return car_image, notcar_image, car_ind
 
 def _hog(car_image):
     '''Applies the hog filter to the image'''
 
+    ### TODO: Convert to whatever color transformation works best
+    
     # Convert image to grayscale
     gray = cv2.cvtColor(car_image, cv2.COLOR_RGB2GRAY)
     
@@ -117,41 +116,6 @@ def _hog(car_image):
    # Return the features and the image
     return features, hog_image
 
-def _get_combined_features(cars, notcars):
-    '''Get the features for the cars and notcars list of images in a combined fashion'''
-    
-    # Hog parameters set up from globals
-    colorspace = COLORSPACE
-    orient = ORIENT
-    pix_per_cell = PIX_PER_CELL
-    cell_per_block = CELL_PER_BLOCK
-    hog_channel = HOG_CHANNEL
-
-    # Get the features from the color filter
-    car_features = dip.extract_color_features(cars)
-    notcar_features = dip.extract_color_features(notcars)
-    
-    # Get the features from the hog filter
-    car_features_hog = dip.extract_hog_features(cars, cspace=colorspace,
-                                                orient=orient,
-                                                pix_per_cell=pix_per_cell,
-                                                cell_per_block=cell_per_block,
-                                                hog_channel=hog_channel)
-    notcar_features_hog = dip.extract_hog_features(notcars, cspace=colorspace,
-                                                   orient=orient,
-                                                   pix_per_cell=pix_per_cell,
-                                                   cell_per_block=cell_per_block,
-                                                   hog_channel=hog_channel)
-
-    # TODO: combine all filters features
-    np.append(car_features, car_features_hog)
-    np.append(notcar_features, notcar_features_hog)
-    
-    print('>>> Using:',orient,'orientations',pix_per_cell,
-          'pixels per cell and', cell_per_block,'cells per block')
-    
-    return car_features, notcar_features
-    
 def _normalize_features(car_features, notcar_features):
     '''Normalize the features'''
     
@@ -164,7 +128,7 @@ def _normalize_features(car_features, notcar_features):
     # Apply the scaler to X
     scaled_X = X_scaler.transform(X)
 
-    return X, scaled_X
+    return X, scaled_X, X_scaler
     
 def _processed_dataset(X, scaled_X, car_features_n, notcar_features_n):
     '''Split the dataset into training and test set'''
@@ -178,6 +142,28 @@ def _processed_dataset(X, scaled_X, car_features_n, notcar_features_n):
                                                         random_state=rand_state)
 
     return X_train, X_test, y_train, y_test
+
+#----------------------
+# Reporting functions
+#----------------------
+
+def _show_stats(data_info):
+    print('>>> Dataset with count of', data_info["n_cars"], ' cars and ',
+          data_info["n_notcars"], ' non-cars',
+          ' of size: ',data_info["image_shape"],
+          ' and data type:', data_info["data_type"])
+
+def _show_hog_params():
+    print('>>> Using hog with:', ORIENT, 'orientations',
+          PIX_PER_CELL, 'pixels per cell and',
+          CELL_PER_BLOCK, 'cells per block')
+
+def _show_vector_length(vector_length):
+    print('>>> Feature vector length:', vector_length)
+
+#-------------------
+# Plot functions
+#-------------------
 
 def _plot_car_notcar(car_image, notcar_image):
     fig = plt.figure()
@@ -216,21 +202,23 @@ def _plot_normalized_features(X, scaled_X, car_image, car_ind):
 def data_prep(vis=True):
     '''Explore the dataset and return the cars and not cars images in two different lists'''
     
-    # Get the car and notcar images from the dataset directories
+    # 1) Get the car and notcar images from the dataset directories
     cars, notcars = _get_data_from_file()
     
-    # Get the color and hog features from the random car image
-    car_features, notcar_features = _get_combined_features(cars, notcars)
-                                        
-    # Normalize the combined features
-    X, scaled_X = _normalize_features(car_features, notcar_features)
+    # 2) Get the color and hog features from the random car image
     
-    # Split the dataset into training and test sets
+    ### TODO:
+    car_features, notcar_features = dip.get_combined_features(cars, notcars)
+                                        
+    # 3) Normalize the combined features
+    X, scaled_X, X_scaler = _normalize_features(car_features, notcar_features)
+    
+    # 4) Split the dataset into training and test sets
     X_train, X_test, y_train, y_test = _processed_dataset(X, scaled_X,
                                                           len(car_features),
                                                           len(notcar_features))
 
-    # Show results by default
+    # Show results by default, if not just return the datasets
     if vis:
         # Get some information about the dataset size
         data_info = _data_look(cars, notcars)
@@ -244,9 +232,10 @@ def data_prep(vis=True):
         # Call all ploting functions
         _show_stats(data_info)
         _plot_car_notcar(car_image, notcar_image)
+        _show_hog_params()
         _plot_hog(car_image, hog_image)
         _plot_normalized_features(X, scaled_X, car_image, car_ind)
-        print('>>> Feature vector length:', len(X_train[0]))
+        _show_vector_length(len(X_train[0]))
 
     # Return the training and testing datasets to be used by the classifier
-    return X_train, X_test, y_train, y_test
+    return X_train, X_test, y_train, y_test, X_scaler

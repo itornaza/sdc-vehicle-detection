@@ -37,11 +37,14 @@ if __name__ == '__main__':
     command = parseCommands()
     if command == Commands.DATA:
         print(">>> Data exploration")
-        X_train, X_test, y_train, y_test = data_prep(vis=True)
-        classify(X_train, X_test, y_train, y_test)
+        Plotting.exploreColorSpace()
+        X_train, X_test, y_train, y_test, X_scaler = data_prep(vis=True)
+        svc = classify(X_train, X_test, y_train, y_test, vis=True)
+        exploratory_pipeline(svc, X_scaler, vis=True)
     elif command == Commands.IMAGE:
         print(">>> Single image processing")
-        exploratory_pipeline()
-        Plotting.exploreColorSpace()
+        X_train, X_test, y_train, y_test, X_scaler = data_prep(vis=False)
+        svc = classify(X_train, X_test, y_train, y_test, vis=True)
+        exploratory_pipeline(svc, X_scaler, vis=True)
     else:
         print(">>> Create video")
