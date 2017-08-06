@@ -2,12 +2,22 @@
 import cv2
 import glob
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 import numpy as np
 import pickle
 from scipy.ndimage.measurements import label
 from skimage.feature import hog
 from sklearn.preprocessing import StandardScaler
+
+from parameters import Prms
+
+# Hog hyperparameters
+COLORSPACE = Prms.COLORSPACE
+ORIENT = Prms.ORIENT
+PIX_PER_CELL = Prms.PIX_PER_CELL
+CELL_PER_BLOCK = Prms.CELL_PER_BLOCK
+HOG_CHANNEL = Prms.HOG_CHANNEL
+SPATIAL_SIZE = Prms.SPATIAL_SIZE
+N_BINS = Prms.N_BINS
 
 class dip():
     '''Digital Image Processing functions for vehicle detection'''
@@ -46,7 +56,7 @@ class dip():
         # Iterate through template list
         for temp in template_list:
             # Read in templates one by one
-            tmp = mpimg.imread(temp)
+            tmp = cv2.imread(temp)
             
             # Use cv2.matchTemplate() to search the image
             result = cv2.matchTemplate(img, tmp, method)
@@ -205,20 +215,123 @@ class dip():
                     feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
                 elif cspace == 'YUV':
                     feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+                elif cspace == 'YCrCb':
+                    feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
             else: feature_image = np.copy(image)
             
             # Apply bin_spatial() to get spatial color features
-            spatial_features = dip.bin_spatial(feature_image, size=spatial_size)
+            spatial_features = dip.bin_spatial(feature_image, size=SPATIAL_SIZE)
             
             # Apply color_hist() also with a color space option now
-            hist_features = dip.color_hist(feature_image, nbins=hist_bins, bins_range=hist_range)
+            hist_features = dip.color_hist(feature_image, nbins=N_BINS, bins_range=hist_range)
 
             # Append the new feature vector to the features list
             features.append(np.concatenate((spatial_features, hist_features)))
         
         # Return list of feature vectors
         return features
-    
+
+    def get_combined_features(cars, notcars):
+        '''Get the features for the cars and notcars list of images in a combined fashion'''
+        
+        # Hog parameters set up from globals
+        colorspace = COLORSPACE
+        orient = ORIENT
+        pix_per_cell = PIX_PER_CELL
+        cell_per_block = CELL_PER_BLOCK
+        hog_channel = HOG_CHANNEL
+
+        # Get the features from the color filter
+        car_features = dip.extract_color_features(cars)
+        notcar_features = dip.extract_color_features(notcars)
+        
+        # Get the features from the hog filter
+        car_features_hog = dip.extract_hog_features(cars, cspace=colorspace,
+                                                    orient=orient,
+                                                    pix_per_cell=pix_per_cell,
+                                                    cell_per_block=cell_per_block,
+                                                    hog_channel=hog_channel)
+        notcar_features_hog = dip.extract_hog_features(notcars, cspace=colorspace,
+                                                       orient=orient,
+                                                       pix_per_cell=pix_per_cell,
+                                                       cell_per_block=cell_per_block,
+                                                       hog_channel=hog_channel)
+        
+        np.append(car_features, car_features_hog)
+        np.append(notcar_features, notcar_features_hog)
+        
+        return car_features, notcar_features
+
+    def single_img_features(img, color_space='RGB', spatial_size=(32, 32),
+                            hist_bins=32, orient=9,
+                            pix_per_cell=8, cell_per_block=2, hog_channel=0,
+                            spatial_feat=True, hist_feat=True, hog_feat=True):
+        '''
+        Extracts features from a single image window. This function is very 
+        similar to extract_features() just for a single image rather than
+        list of images
+        '''
+        
+        #1) Define an empty list to receive features
+        img_features = []
+        
+        #2) Apply color conversion if other than 'RGB'
+        if color_space != 'RGB':
+            if color_space == 'HSV':
+                feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+            elif color_space == 'LUV':
+                feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
+            elif color_space == 'HLS':
+                feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
+            elif color_space == 'YUV':
+                feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
+            elif color_space == 'YCrCb':
+                feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
+        else:
+            feature_image = np.copy(img)
+        
+        #3) Compute spatial features if flag is set
+        if spatial_feat == True:
+            spatial_features = dip.bin_spatial(feature_image, size=SPATIAL_SIZE)
+            
+            #4) Append features to list
+            img_features.append(spatial_features)
+            
+        #5) Compute histogram features if flag is set
+        if hist_feat == True:
+            hist_features = dip.color_hist(feature_image, nbins=N_BINS)
+
+            #6) Append features to list
+            img_features.append(hist_features)
+
+        #7) Compute HOG features if flag is set
+        if hog_feat == True:
+            if hog_channel == 'ALL':
+                hog_features = []
+                for channel in range(feature_image.shape[2]):
+                    hog_features.extend(dip.get_hog_features(feature_image[:,:,channel],
+                                                             orient,
+                                                             pix_per_cell,
+                                                             cell_per_block,
+                                                             vis=False,
+                                                             feature_vec=True))
+            else:
+                hog_features = dip.get_hog_features(feature_image[:,:,hog_channel],
+                                                    orient,
+                                                    pix_per_cell,
+                                                    cell_per_block,
+                                                    vis=False,
+                                                    feature_vec=True)
+        #8) Append features to list
+        img_features.append(hog_features)
+
+        #9) Return concatenated array of features
+        return np.concatenate(img_features)
+
+    #---------------------
+    # Detecion functions
+    #---------------------
+
     def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
                      xy_window=(64, 64), xy_overlap=(0.5, 0.5)):
         '''
@@ -272,107 +385,46 @@ class dip():
         # Return the list of windows
         return window_list
 
-    def single_img_features(img, color_space='RGB', spatial_size=(32, 32),
-                            hist_bins=32, orient=9,
-                            pix_per_cell=8, cell_per_block=2, hog_channel=0,
-                            spatial_feat=True, hist_feat=True, hog_feat=True):
-        '''
-        Extracts features from a single image window. This function is very 
-        similar to extract_features() just for a single image rather than 
-        list of images
-        '''
-        
-        #1) Define an empty list to receive features
-        img_features = []
-        
-        #2) Apply color conversion if other than 'RGB'
-        if color_space != 'RGB':
-            if color_space == 'HSV':
-                feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
-            elif color_space == 'LUV':
-                feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
-            elif color_space == 'HLS':
-                feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
-            elif color_space == 'YUV':
-                feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
-            elif color_space == 'YCrCb':
-                feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-        else:
-            feature_image = np.copy(img)
-        
-        #3) Compute spatial features if flag is set
-        if spatial_feat == True:
-            spatial_features = bin_spatial(feature_image, size=spatial_size)
-            
-            #4) Append features to list
-            img_features.append(spatial_features)
-        
-        #5) Compute histogram features if flag is set
-        if hist_feat == True:
-            hist_features = color_hist(feature_image, nbins=hist_bins)
-            
-            #6) Append features to list
-            img_features.append(hist_features)
-        
-        #7) Compute HOG features if flag is set
-        if hog_feat == True:
-            if hog_channel == 'ALL':
-                hog_features = []
-                for channel in range(feature_image.shape[2]):
-                    hog_features.extend(dip.get_hog_features(feature_image[:,:,channel],
-                                                         orient, pix_per_cell, cell_per_block,
-                                                         vis=False, feature_vec=True))
-            else:
-                hog_features = dip.get_hog_features(feature_image[:,:,hog_channel], orient,
-                                                pix_per_cell, cell_per_block, vis=False, feature_vec=True)
-            #8) Append features to list
-            img_features.append(hog_features)
-
-        #9) Return concatenated array of features
-        return np.concatenate(img_features)
-
-    def search_windows(img, windows, clf, scaler, color_space='RGB',
-                       spatial_size=(32, 32), hist_bins=32,
-                       hist_range=(0, 256), orient=9,
-                       pix_per_cell=8, cell_per_block=2,
-                       hog_channel=0, spatial_feat=True,
-                       hist_feat=True, hog_feat=True):
-        
+    def search_windows(img, windows, clf, scaler, color_space='RGB', spatial_size=(32, 32),
+                   hist_bins=32, hist_range=(0, 256), orient=9, pix_per_cell=8, cell_per_block=2,
+                   hog_channel=0, spatial_feat=True, hist_feat=True, hog_feat=True):
         '''
         Pass an image and the list of windows to be searched (output of slide_windows())
         '''
-        
+            
         #1) Create an empty list to receive positive detection windows
         on_windows = []
         
         #2) Iterate over all windows in the list
         for window in windows:
             #3) Extract the test window from original image
-            test_img = cv2.resize(img[window[0][1]:window[1][1], window[0][0]:window[1][0]], (64, 64))
-            
+            test_img = cv2.resize(img[window[0][1]:window[1][1], window[0][0]:window[1][0]], (64, 64),
+                                  interpolation=cv2.INTER_AREA)
+
             #4) Extract features for that window using single_img_features()
-            features = single_img_features(test_img, color_space=color_space,
-                                           spatial_size=spatial_size, hist_bins=hist_bins,
-                                           orient=orient, pix_per_cell=pix_per_cell,
-                                           cell_per_block=cell_per_block,
-                                           hog_channel=hog_channel, spatial_feat=spatial_feat,
-                                           hist_feat=hist_feat, hog_feat=hog_feat)
-           
+            features = dip.single_img_features(test_img, color_space=color_space,
+                                               spatial_size=spatial_size, hist_bins=hist_bins,
+                                               orient=orient, pix_per_cell=pix_per_cell,
+                                               cell_per_block=cell_per_block,
+                                               hog_channel=hog_channel,
+                                               spatial_feat=spatial_feat,
+                                               hist_feat=hist_feat, hog_feat=hog_feat)
+            
+            
             #5) Scale extracted features to be fed to classifier
             test_features = scaler.transform(np.array(features).reshape(1, -1))
-           
+            
             #6) Predict using your classifier
             prediction = clf.predict(test_features)
-           
+                
             #7) If positive (prediction == 1) then save the window
             if prediction == 1:
                 on_windows.append(window)
-
+                    
         #8) Return windows for positive detections
         return on_windows
 
     def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
-
         '''
         Extracts features using hog sub-sampling and make predictions
         '''
@@ -425,8 +477,8 @@ class dip():
                 subimg = cv2.resize(ctrans_tosearch[ytop:ytop+window, xleft:xleft+window], (64,64))
                 
                 # Get color features
-                spatial_features = bin_spatial(subimg, size=spatial_size)
-                hist_features = color_hist(subimg, nbins=hist_bins)
+                spatial_features = bin_spatial(subimg, size=SPATIAL_SIZE)
+                hist_features = color_hist(subimg, nbins=N_BINS)
                 
                 # Scale features and make a prediction
                 test_features = X_scaler.transform(np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))
