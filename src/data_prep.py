@@ -9,13 +9,6 @@ from sklearn.preprocessing import StandardScaler
 from dip import dip
 from parameters import Prms
 
-# Hog hyper-parameters
-COLORSPACE = Prms.COLORSPACE
-ORIENT = Prms.ORIENT
-PIX_PER_CELL = Prms.PIX_PER_CELL
-CELL_PER_BLOCK = Prms.CELL_PER_BLOCK
-HOG_CHANNEL = Prms.HOG_CHANNEL
-
 def _get_data_from_file():
     '''
     Reads the images from the ./dataset directory and 
@@ -96,15 +89,13 @@ def _get_random_images(cars, notcars):
 def _hog(car_image):
     '''Applies the hog filter to the image'''
 
-    ### TODO: Convert to whatever color transformation works best
-    
     # Convert image to grayscale
     gray = cv2.cvtColor(car_image, cv2.COLOR_RGB2GRAY)
     
     # Define HOG parameters from the globals
-    orient = ORIENT
-    pix_per_cell = PIX_PER_CELL
-    cell_per_block = CELL_PER_BLOCK
+    orient = Prms.ORIENT
+    pix_per_cell = Prms.PIX_PER_CELL
+    cell_per_block = Prms.CELL_PER_BLOCK
 
     # Hog processing
     features, hog_image = dip.get_hog_features(gray,
@@ -205,12 +196,30 @@ def data_prep(vis=True):
     # 1) Get the car and notcar images from the dataset directories
     cars, notcars = _get_data_from_file()
     
-    # 2) Get the color and hog features from the random car image
-    
-    ### TODO:
-    car_features, notcar_features = dip.get_combined_features(cars, notcars)
+    # 2.1) Get the for the car image features using the global parameters set in Prms class
+    car_features = dip.extract_features(cars, color_space=Prms.COLORSPACE,
+                                        spatial_size=Prms.SPATIAL_SIZE,
+                                        hist_bins=Prms.N_BINS,
+                                        orient=Prms.ORIENT,
+                                        pix_per_cell=Prms.PIX_PER_CELL,
+                                        cell_per_block=Prms.CELL_PER_BLOCK,
+                                        hog_channel=Prms.HOG_CHANNEL,
+                                        spatial_feat=Prms.SPATIAL_FEAT,
+                                        hist_feat=Prms.HIST_FEAT,
+                                        hog_feat=Prms.HOG_FEAT)
+    # 2.2) Get the not car images features
+    notcar_features = dip.extract_features(notcars, color_space=Prms.COLORSPACE,
+                                           spatial_size=Prms.SPATIAL_SIZE,
+                                           hist_bins=Prms.N_BINS,
+                                           orient=Prms.ORIENT,
+                                           pix_per_cell=Prms.PIX_PER_CELL,
+                                           cell_per_block=Prms.CELL_PER_BLOCK,
+                                           hog_channel=Prms.HOG_CHANNEL,
+                                           spatial_feat=Prms.SPATIAL_FEAT,
+                                           hist_feat=Prms.HIST_FEAT,
+                                           hog_feat=Prms.HOG_FEAT)
                                         
-    # 3) Normalize the combined features
+    # 3) Combined and normalize the features
     X, scaled_X, X_scaler = _normalize_features(car_features, notcar_features)
     
     # 4) Split the dataset into training and test sets
