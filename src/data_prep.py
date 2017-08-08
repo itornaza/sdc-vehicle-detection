@@ -3,6 +3,7 @@ import glob
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
@@ -32,7 +33,8 @@ def _get_data_from_file():
     kitti_images = glob.glob(os.path.join(kitti_path, '*.png'))
     
     # Collect results to the cars list
-    car_images = gti_far_images + gti_left_images + gti_middle_images + gti_right_images + kitti_images
+    car_images = gti_far_images + gti_left_images + gti_middle_images + \
+                 gti_right_images + kitti_images
     
     # Get the non-car images from the dataset
     extras_path = '../dataset/non-vehicles/Extras'
@@ -145,9 +147,10 @@ def _show_stats(data_info):
           ' and data type:', data_info["data_type"])
 
 def _show_hog_params():
-    print('>>> Using hog with:', ORIENT, 'orientations',
-          PIX_PER_CELL, 'pixels per cell and',
-          CELL_PER_BLOCK, 'cells per block')
+    print('>>> Using hog with:',
+          Prms.ORIENT, 'orientations',
+          Prms.PIX_PER_CELL, 'pixels per cell and',
+          Prms.CELL_PER_BLOCK, 'cells per block')
 
 def _show_vector_length(vector_length):
     print('>>> Feature vector length:', vector_length)
@@ -189,6 +192,19 @@ def _plot_normalized_features(X, scaled_X, car_image, car_ind):
     plt.title('Normalized Features')
     fig.tight_layout()
     plt.show()
+
+def save_scaler(X_scaler):
+    '''Save X_scaler to file for future use'''
+
+    with open('scaler.pkl', 'wb') as fid:
+        pickle.dump(X_scaler, fid)
+
+def load_scaler():
+    '''Load X_scaler from file'''
+
+    with open('scaler.pkl', 'rb') as fid:
+        X_scaler = pickle.load(fid)
+        return X_scaler
 
 def data_prep(vis=True):
     '''Explore the dataset and return the cars and not cars images in two different lists'''
