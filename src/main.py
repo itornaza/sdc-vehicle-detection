@@ -59,10 +59,16 @@ if __name__ == '__main__':
         X_scaler = load_scaler()
         
         # 2) Test the classifier on test images
-        #Pipelines.hot_windows(svc, X_scaler, vis=True)
+        print(">>> Displaying sliding window processed images")
+        Pipelines.hot_windows(svc, X_scaler, vis=True)
 
         # 3) Test classifier and hog sub sampling
+        print(">>> Displaying sub sampling procesed images")
         Pipelines.hog_sub_sampling(svc, X_scaler)
+
+        # 4) Use the heatmap
+        print(">>> Displaing the heatmap of the sub sampling prpcessed images")
+        Pipelines.heat(svc, X_scaler)
 
     else:
         print(">>> Running the classifier on video")

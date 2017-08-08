@@ -3,6 +3,7 @@ import cv2
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.ndimage.measurements import label
 
 from dip import dip
 from parameters import Prms
@@ -45,20 +46,67 @@ class Pipelines():
 
     def hog_sub_sampling(svc, X_scaler):
         '''Apply hog sub-sampling to an image to locate cars with one search'''
-        
-        img = cv2.imread('../test_images/test1.jpg')
-        
-        out_img = dip.find_cars(img,
-                                Prms.Y_START,
-                                Prms.Y_STOP,
-                                Prms.SCALE,
-                                svc, X_scaler,
-                                Prms.HOG_CHANNEL,
-                                Prms.ORIENT,
-                                Prms.PIX_PER_CELL,
-                                Prms.CELL_PER_BLOCK,
-                                Prms.SPATIAL_SIZE,
-                                Prms.N_BINS)
-        
-        plt.imshow(out_img)
-        plt.show()
+
+        for img in glob.glob('../test_images/test*.jpg'):
+            image = cv2.imread(img)
+            
+            out_img, box_list = dip.find_cars(image,
+                                              Prms.Y_START,
+                                              Prms.Y_STOP,
+                                              Prms.SCALE,
+                                              svc, X_scaler,
+                                              Prms.HOG_CHANNEL,
+                                              Prms.ORIENT,
+                                              Prms.PIX_PER_CELL,
+                                              Prms.CELL_PER_BLOCK,
+                                              Prms.SPATIAL_SIZE,
+                                              Prms.N_BINS)
+            
+            plt.imshow(out_img)
+            plt.show()
+
+    def heat(svc, X_scaler):
+
+        for img in glob.glob('../test_images/test*.jpg'):
+            image = cv2.imread(img)
+
+            # Create an empty heat map to draw on
+            heat = np.zeros_like(image[:,:,0]).astype(np.float)
+
+            # Get the box list from using the hog sub sampling technique
+            out_img, box_list = dip.find_cars(image,
+                                              Prms.Y_START,
+                                              Prms.Y_STOP,
+                                              Prms.SCALE,
+                                              svc, X_scaler,
+                                              Prms.HOG_CHANNEL,
+                                              Prms.ORIENT,
+                                              Prms.PIX_PER_CELL,
+                                              Prms.CELL_PER_BLOCK,
+                                              Prms.SPATIAL_SIZE,
+                                              Prms.N_BINS)
+
+            # Add heat to each box in box list
+            heat = dip.add_heat(heat,box_list)
+
+            # Apply threshold to help remove false positives
+            heat = dip.apply_threshold(heat,1)
+
+            # Visualize the heatmap when displaying
+            heatmap = np.clip(heat, 0, 255)
+
+            # Find final boxes from heatmap using label function
+            labels = label(heatmap)
+            draw_img = dip.draw_labeled_bboxes(np.copy(image), labels)
+
+            fig = plt.figure()
+            plt.subplot(121)
+            plt.imshow(draw_img)
+            plt.title('Car Positions')
+            plt.subplot(122)
+            plt.imshow(heatmap, cmap='hot')
+            plt.title('Heat Map')
+            fig.tight_layout()
+            plt.show()
+
+

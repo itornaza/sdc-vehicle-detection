@@ -368,9 +368,12 @@ class dip():
                   orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
         '''
         Extracts features using hog sub-sampling and make predictions
+        Returns the detection boxes coordinates as well as an image showing
+        the cars that are detected
         '''
         
         draw_img = np.copy(img)
+        box_list = []
         
         img_tosearch = img[ystart:ystop,:,:]
         ctrans_tosearch = dip.convert_color(img_tosearch)
@@ -446,10 +449,16 @@ class dip():
                     xbox_left = np.int(xleft*scale)
                     ytop_draw = np.int(ytop*scale)
                     win_draw = np.int(window*scale)
+
+                    # Draw the box on the image
                     cv2.rectangle(draw_img,(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart),(255,0,0),6)
 
+                    # Extract the bbox coordinates
+                    box = (xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart)
+                    box_list.append(box)
+
         # Return the image with the vehicle detection overlay
-        return draw_img
+        return draw_img, box_list
 
     #---------
     # Heatmap
