@@ -1,8 +1,10 @@
+
 from classifier import My_classifier
-from dip import dip
-from plotting import Plotting
-from pipelines import Pipelines
 from data_prep import *
+from dip import dip
+from pipelines import Pipelines
+from plotting import Plotting
+
 from enum import Enum
 from os import sys
 
@@ -57,10 +59,10 @@ if __name__ == '__main__':
         X_scaler = load_scaler()
         
         # 2) Test the classifier on test images
-        Pipelines.hot_windows(svc, X_scaler, vis=True)
+        #Pipelines.hot_windows(svc, X_scaler, vis=True)
 
         # 3) Test classifier and hog sub sampling
-        Pipelines.hog_sub_sampling
+        Pipelines.hog_sub_sampling(svc, X_scaler)
 
     else:
         print(">>> Running the classifier on video")
