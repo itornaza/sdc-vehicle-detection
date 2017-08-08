@@ -141,17 +141,22 @@ class dip():
 
     def combined_features(feature_image, spatial_feat, hist_feat, hog_feat, hist_bins, orient,
                           pix_per_cell, cell_per_block, hog_channel, spatial_size):
-        '''Extracts features from a list of images'''
+        '''Extracts features from an images'''
         
+        # list to hold the image features
         file_features = []
+        
+        # Get the spatial features
         if spatial_feat == True:
             spatial_features = dip.bin_spatial(feature_image, size=spatial_size)
             file_features.append(spatial_features)
         
+        # Get the histogram features
         if hist_feat == True:
             hist_features = dip.color_hist(feature_image, nbins=hist_bins)
             file_features.append(hist_features)
         
+        # Get the hog features
         if hog_feat == True:
             if hog_channel == 'ALL':
                 hog_features = []
@@ -161,20 +166,22 @@ class dip():
                                                          vis=False, feature_vec=True))
                     hog_features = np.ravel(hog_features)
             else:
+                # TODO: investigate colorspace conversion to grayscale
                 feature_image = cv2.cvtColor(feature_image, cv2.COLOR_LUV2RGB)
                 feature_image = cv2.cvtColor(feature_image, cv2.COLOR_RGB2GRAY)
                 hog_features = dip.get_hog_features(feature_image[:,:], orient,
                                                     pix_per_cell, cell_per_block, vis=False,
                                                     feature_vec=True)
-            
             file_features.append(hog_features)
         
+        # Return the features as a list
         return file_features
 
     def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
                          hist_bins=32, orient=9,
                          pix_per_cell=8, cell_per_block=2, hog_channel=0,
                          spatial_feat=True, hist_feat=True, hog_feat=True):
+        '''Extracts features from a list of images'''
         
         # Create a list to append feature vectors to
         features = []
@@ -184,21 +191,23 @@ class dip():
             file_features = []
             image = cv2.imread(file_p)
 
+            # Convert the image to the selected colorspace
             feature_image = dip.convertImageForColorspace(image, color_space)
             
+            # Get the image features and append them to the list
             file_features = dip.combined_features(feature_image, spatial_feat, hist_feat,
                                                   hog_feat,hist_bins, orient, pix_per_cell,
                                                   cell_per_block, hog_channel, spatial_size)
-                                             
             features.append(np.concatenate(file_features))
 
-            # Augment the dataset with flipped images
-            feature_image=cv2.flip(feature_image,1)
+            # Augment the dataset with flipped images and append them to the list
+            feature_image=cv2.flip(feature_image, 1)
             file_features = dip.combined_features(feature_image, spatial_feat, hist_feat,
                                                   hog_feat, hist_bins, orient, pix_per_cell,
                                                   cell_per_block, hog_channel, spatial_size)
             features.append(np.concatenate(file_features))
         
+        # Return the features as a list
         return features
 
     def single_img_features(img, color_space='RGB', spatial_size=(32, 32),
@@ -382,9 +391,9 @@ class dip():
         nysteps = (nyblocks - nblocks_per_window) // cells_per_step
         
         # Compute individual channel HOG features for the entire image
-        hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, feature_vec=False)
-        hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
-        hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
+        hog1 = dip.get_hog_features(ch1, orient, pix_per_cell, cell_per_block, feature_vec=False)
+        hog2 = dip.get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
+        hog3 = dip.get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
         
         for xb in range(nxsteps):
             for yb in range(nysteps):
@@ -404,8 +413,8 @@ class dip():
                 subimg = cv2.resize(ctrans_tosearch[ytop:ytop+window, xleft:xleft+window], (64,64))
                 
                 # Get color features
-                spatial_features = bin_spatial(subimg, size=SPATIAL_SIZE)
-                hist_features = color_hist(subimg, nbins=N_BINS)
+                spatial_features = dip.bin_spatial(subimg, size=Prms.SPATIAL_SIZE)
+                hist_features = dip.color_hist(subimg, nbins=Prms.N_BINS)
                 
                 # Scale features and make a prediction
                 test_features = X_scaler.transform(np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))
