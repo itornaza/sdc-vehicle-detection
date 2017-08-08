@@ -161,9 +161,9 @@ class dip():
             if hog_channel == 'ALL':
                 hog_features = []
                 for channel in range(feature_image.shape[2]):
-                    hog_features.append(get_hog_features(feature_image[:,:,channel],
-                                                         orient, pix_per_cell, cell_per_block,
-                                                         vis=False, feature_vec=True))
+                    hog_features.append(dip.get_hog_features(feature_image[:,:,channel],
+                                                             orient, pix_per_cell, cell_per_block,
+                                                             vis=False, feature_vec=True))
                     hog_features = np.ravel(hog_features)
             else:
                 # TODO: investigate colorspace conversion to grayscale
@@ -360,23 +360,31 @@ class dip():
         #8) Return windows for positive detections
         return on_windows
 
-    def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
+    # TODO: Generalize for other selections
+    def convert_color(img):
+        return cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
+
+    def find_cars(img, ystart, ystop, scale, svc, X_scaler, hog_channel,
+                  orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
         '''
         Extracts features using hog sub-sampling and make predictions
         '''
         
         draw_img = np.copy(img)
-        img = img.astype(np.float32)/255
         
         img_tosearch = img[ystart:ystop,:,:]
-        ctrans_tosearch = convert_color(img_tosearch, conv='RGB2YCrCb')
+        ctrans_tosearch = dip.convert_color(img_tosearch)
         if scale != 1:
             imshape = ctrans_tosearch.shape
             ctrans_tosearch = cv2.resize(ctrans_tosearch, (np.int(imshape[1]/scale), np.int(imshape[0]/scale)))
 
-        ch1 = ctrans_tosearch[:,:,0]
-        ch2 = ctrans_tosearch[:,:,1]
-        ch3 = ctrans_tosearch[:,:,2]
+        # Get the hog channel depending on selection
+        if hog_channel == 0 or hog_channel == 'ALL':
+            ch1 = ctrans_tosearch[:,:,0]
+        if hog_channel == 1 or hog_channel == 'ALL':
+            ch2 = ctrans_tosearch[:,:,1]
+        if hog_channel == 2 or hog_channel == 'ALL':
+            ch3 = ctrans_tosearch[:,:,2]
 
         # Define blocks and steps as above
         nxblocks = (ch1.shape[1] // pix_per_cell) - cell_per_block + 1
@@ -390,10 +398,13 @@ class dip():
         nxsteps = (nxblocks - nblocks_per_window) // cells_per_step
         nysteps = (nyblocks - nblocks_per_window) // cells_per_step
         
-        # Compute individual channel HOG features for the entire image
-        hog1 = dip.get_hog_features(ch1, orient, pix_per_cell, cell_per_block, feature_vec=False)
-        hog2 = dip.get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
-        hog3 = dip.get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
+        # Compute individual channel HOG features for the entire image and for the selected channel(s)
+        if hog_channel == 0 or hog_channel == 'ALL':
+            hog1 = dip.get_hog_features(ch1, orient, pix_per_cell, cell_per_block, feature_vec=False)
+        if hog_channel == 1 or hog_channel == 'ALL':
+            hog2 = dip.get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
+        if hog_channel == 2 or hog_channel == 'ALL':
+            hog3 = dip.get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
         
         for xb in range(nxsteps):
             for yb in range(nysteps):
@@ -401,10 +412,21 @@ class dip():
                 xpos = xb*cells_per_step
                 
                 # Extract HOG for this patch
-                hog_feat1 = hog1[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
-                hog_feat2 = hog2[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
-                hog_feat3 = hog3[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
-                hog_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
+                if hog_channel == 0 or hog_channel == 'ALL':
+                    hog_feat1 = hog1[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
+                    hog_single_channel = hog_feat1
+                if hog_channel == 1 or hog_channel == 'ALL':
+                    hog_feat2 = hog2[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
+                    hog_single_channel = hog_feat2
+                if hog_channel == 2 or hog_channel == 'ALL':
+                    hog_feat3 = hog3[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
+                    hog_single_channel = hog_feat3
+
+                # Get the single channel or multi-channel hog features
+                if hog_channel == 'ALL':
+                    hog_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
+                else:
+                    hog_features = hog_single_channel
                 
                 xleft = xpos*pix_per_cell
                 ytop = ypos*pix_per_cell
@@ -418,15 +440,15 @@ class dip():
                 
                 # Scale features and make a prediction
                 test_features = X_scaler.transform(np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))
-                #test_features = X_scaler.transform(np.hstack((shape_feat, hist_feat)).reshape(1, -1))
                 test_prediction = svc.predict(test_features)
                 
                 if test_prediction == 1:
                     xbox_left = np.int(xleft*scale)
                     ytop_draw = np.int(ytop*scale)
                     win_draw = np.int(window*scale)
-                    cv2.rectangle(draw_img,(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart),(0,0,255),6)
+                    cv2.rectangle(draw_img,(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart),(255,0,0),6)
 
+        # Return the image with the vehicle detection overlay
         return draw_img
 
     #---------
