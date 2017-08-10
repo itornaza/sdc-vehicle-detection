@@ -1,5 +1,5 @@
 
-class Prms():
+class Prms:
     '''
     Global definition of the hog parameters 
     to be used consistently throughout the project
@@ -24,6 +24,10 @@ class Prms():
     XY_OVERLAP      = (0.85, 0.85)
     
     # Hog subsampling
-    Y_START         = 400
-    Y_STOP          = 640
-    SCALE           = 1.5
+    FAR             = 0
+    MID             = 1
+    NEAR            = 2
+    Y_START         = [380, 400, 500]
+    Y_STOP          = [480, 600, 700]
+    SCALE           = [1.0, 1.5, 2.5]
+

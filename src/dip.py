@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 
 from parameters import Prms
 
-class dip():
+class dip:
     '''Digital Image Processing functions for vehicle detection'''
 
     def convertImageForColorspace(image, color_space):

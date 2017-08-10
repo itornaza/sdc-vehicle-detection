@@ -1,14 +1,16 @@
 
+from classifier import My_classifier
+from data_prep import *
+from dip import dip
+from parameters import Prms
+
 import cv2
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.ndimage.measurements import label
 
-from dip import dip
-from parameters import Prms
-
-class Pipelines():
+class Pipelines:
 
     def hot_windows(svc, X_scaler, vis=False):
         '''Check the classifier by applying the vehicle detection to the test images'''
@@ -50,10 +52,11 @@ class Pipelines():
         for img in glob.glob('../test_images/test*.jpg'):
             image = cv2.imread(img)
             
+            # Just run for the middle distance detection
             out_img, box_list = dip.find_cars(image,
-                                              Prms.Y_START,
-                                              Prms.Y_STOP,
-                                              Prms.SCALE,
+                                              Prms.Y_START[Prms.MID],
+                                              Prms.Y_STOP[Prms.MID],
+                                              Prms.SCALE[Prms.MID],
                                               svc, X_scaler,
                                               Prms.HOG_CHANNEL,
                                               Prms.ORIENT,
@@ -74,23 +77,49 @@ class Pipelines():
             heat = np.zeros_like(image[:,:,0]).astype(np.float)
 
             # Get the box list from using the hog sub sampling technique
-            out_img, box_list = dip.find_cars(image,
-                                              Prms.Y_START,
-                                              Prms.Y_STOP,
-                                              Prms.SCALE,
-                                              svc, X_scaler,
-                                              Prms.HOG_CHANNEL,
-                                              Prms.ORIENT,
-                                              Prms.PIX_PER_CELL,
-                                              Prms.CELL_PER_BLOCK,
-                                              Prms.SPATIAL_SIZE,
-                                              Prms.N_BINS)
+            out_img, box_list_far = dip.find_cars(image,
+                                                  Prms.Y_START[Prms.FAR],
+                                                  Prms.Y_STOP[Prms.FAR],
+                                                  Prms.SCALE[Prms.FAR],
+                                                  svc, X_scaler,
+                                                  Prms.HOG_CHANNEL,
+                                                  Prms.ORIENT,
+                                                  Prms.PIX_PER_CELL,
+                                                  Prms.CELL_PER_BLOCK,
+                                                  Prms.SPATIAL_SIZE,
+                                                  Prms.N_BINS)
+            
+            out_img, box_list_mid = dip.find_cars(image,
+                                                  Prms.Y_START[Prms.MID],
+                                                  Prms.Y_STOP[Prms.MID],
+                                                  Prms.SCALE[Prms.MID],
+                                                  svc, X_scaler,
+                                                  Prms.HOG_CHANNEL,
+                                                  Prms.ORIENT,
+                                                  Prms.PIX_PER_CELL,
+                                                  Prms.CELL_PER_BLOCK,
+                                                  Prms.SPATIAL_SIZE,
+                                                  Prms.N_BINS)
+            
+            out_img, box_list_near = dip.find_cars(image,
+                                                   Prms.Y_START[Prms.NEAR],
+                                                   Prms.Y_STOP[Prms.NEAR],
+                                                   Prms.SCALE[Prms.NEAR],
+                                                   svc, X_scaler,
+                                                   Prms.HOG_CHANNEL,
+                                                   Prms.ORIENT,
+                                                   Prms.PIX_PER_CELL,
+                                                   Prms.CELL_PER_BLOCK,
+                                                   Prms.SPATIAL_SIZE,
+                                                   Prms.N_BINS)
+
+            box_list = box_list_far + box_list_mid + box_list_near
 
             # Add heat to each box in box list
-            heat = dip.add_heat(heat,box_list)
+            heat = dip.add_heat(heat, box_list)
 
             # Apply threshold to help remove false positives
-            heat = dip.apply_threshold(heat,1)
+            heat = dip.apply_threshold(heat, 2)
 
             # Visualize the heatmap when displaying
             heatmap = np.clip(heat, 0, 255)
@@ -108,5 +137,3 @@ class Pipelines():
             plt.title('Heat Map')
             fig.tight_layout()
             plt.show()
-
-
