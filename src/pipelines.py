@@ -12,6 +12,13 @@ from scipy.ndimage.measurements import label
 
 class Pipelines:
 
+    # Parameters for frame processing
+    frame_n = 0 # Keeps track of the frames
+    frame_group_box_list = [] # Box list for a group of frames
+    last_full_box_list = [] # Last full box list for a group of frames
+    
+    # Note: The max numner of frames is set in the Parameters class
+
     def hot_windows(svc, X_scaler, vis=False):
         '''Check the classifier by applying the vehicle detection to the test images'''
 
@@ -69,6 +76,7 @@ class Pipelines:
             plt.show()
 
     def heat(svc, X_scaler):
+        '''Apply a heat map on the test images to validate performance'''
 
         for img in glob.glob('../test_images/test*.jpg'):
             image = cv2.imread(img)
@@ -113,13 +121,14 @@ class Pipelines:
                                                    Prms.SPATIAL_SIZE,
                                                    Prms.N_BINS)
 
+            # out_images are discarded at this time
             box_list = box_list_far + box_list_mid + box_list_near
 
             # Add heat to each box in box list
             heat = dip.add_heat(heat, box_list)
 
             # Apply threshold to help remove false positives
-            heat = dip.apply_threshold(heat, 2)
+            heat = dip.apply_threshold(heat, Prms.IMAGE_THRESHOLD)
 
             # Visualize the heatmap when displaying
             heatmap = np.clip(heat, 0, 255)
@@ -137,3 +146,97 @@ class Pipelines:
             plt.title('Heat Map')
             fig.tight_layout()
             plt.show()
+
+    def video_pipeline(image):
+        '''
+        The main pipeline to process the video from the front camera of the car and
+        returns the video with the detected vehicles
+        '''
+        
+        # Frames book-keeping
+        if Pipelines.frame_n >= Prms.FRAMES_MAX:
+            # Reset the number of frames counter
+            Pipelines.frame_n = 0
+            
+            # We have processed the max number of frames so we can store
+            # the sum of their box lists to. The assignment is passed by value
+            # rather than reference
+            Pipelines.last_full_box_list = Pipelines.frame_group_box_list[:]
+            
+            # Reset the frame group box list to process a new group of frames
+            Pipelines.frame_group_box_list[:] = []
+        
+        # Increase the frame for the next itteration
+        Pipelines.frame_n = Pipelines.frame_n + 1
+        
+        # Load the classifier and the scaler
+        svc = My_classifier.load()
+        X_scaler = load_scaler()
+
+        # Create an empty heat map to draw on
+        heat = np.zeros_like(image[:,:,0]).astype(np.float)
+        
+        ####################
+        # TODO: Check how the image is converted to what colorspace?
+        # TODO: Mask for the x axis as well
+        # Get the box list from using the hog sub sampling technique
+        # For the far field
+        out_img, box_list_far = dip.find_cars(image,
+                                              Prms.Y_START[Prms.FAR],
+                                              Prms.Y_STOP[Prms.FAR],
+                                              Prms.SCALE[Prms.FAR],
+                                              svc, X_scaler,
+                                              Prms.HOG_CHANNEL,
+                                              Prms.ORIENT,
+                                              Prms.PIX_PER_CELL,
+                                              Prms.CELL_PER_BLOCK,
+                                              Prms.SPATIAL_SIZE,
+                                              Prms.N_BINS)
+
+        # Mid field
+        out_img, box_list_mid = dip.find_cars(image,
+                                              Prms.Y_START[Prms.MID],
+                                              Prms.Y_STOP[Prms.MID],
+                                              Prms.SCALE[Prms.MID],
+                                              svc, X_scaler,
+                                              Prms.HOG_CHANNEL,
+                                              Prms.ORIENT,
+                                              Prms.PIX_PER_CELL,
+                                              Prms.CELL_PER_BLOCK,
+                                              Prms.SPATIAL_SIZE,
+                                              Prms.N_BINS)
+        
+        # Near field
+        out_img, box_list_near = dip.find_cars(image,
+                                               Prms.Y_START[Prms.NEAR],
+                                               Prms.Y_STOP[Prms.NEAR],
+                                               Prms.SCALE[Prms.NEAR],
+                                               svc, X_scaler,
+                                               Prms.HOG_CHANNEL,
+                                               Prms.ORIENT,
+                                               Prms.PIX_PER_CELL,
+                                               Prms.CELL_PER_BLOCK,
+                                               Prms.SPATIAL_SIZE,
+                                               Prms.N_BINS)
+        
+        # Append the local and global box list
+        box_list = box_list_far + box_list_mid + box_list_near
+        Pipelines.frame_group_box_list += box_list
+        # TODO: Investigate changing the previous line with the following?
+        #Pipelines.frame_group_box_list.append(box_list[:])
+
+        # Add heat to each box in box list
+        heat = dip.add_heat(heat, Pipelines.last_full_box_list)
+
+        # Apply threshold to help remove false positives
+        heat = dip.apply_threshold(heat, Prms.VIDEO_THRESHOLD)
+
+        # Visualize the heatmap when displaying
+        heatmap = np.clip(heat, 0, 255)
+
+        # Find final boxes from heatmap using label function
+        labels = label(heatmap)
+        draw_img = dip.draw_labeled_bboxes(np.copy(image), labels)
+
+        # Return the image with the detected vehicles
+        return draw_img
