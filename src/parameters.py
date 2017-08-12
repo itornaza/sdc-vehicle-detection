@@ -5,6 +5,9 @@ class Prms:
     to be used consistently throughout the project
     '''
     
+    # Running mode
+    DEBUG           = False
+    
     # Hog parameters
     COLORSPACE      = 'LUV'
     ORIENT          = 8
@@ -19,15 +22,21 @@ class Prms:
     HIST_FEAT       = True
     HOG_FEAT        = True
     
+    # Hog subsampling
+    IMAGE_THRESHOLD = 3
+    VIDEO_THRESHOLD = 25
+    
     # Sliding window
     XY_WINDOW       = (128, 128)
     XY_OVERLAP      = (0.85, 0.85)
     
-    # Hog subsampling
-    FAR             = 0
-    MID             = 1
-    NEAR            = 2
+    # Lists and their indices
     Y_START         = [380, 400, 500]
     Y_STOP          = [480, 600, 700]
     SCALE           = [1.0, 1.5, 2.5]
+    FAR             = 0
+    MID             = 1
+    NEAR            = 2
 
+    # Heatmap
+    FRAMES_MAX      = 5
