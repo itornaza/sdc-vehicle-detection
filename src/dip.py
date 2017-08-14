@@ -15,7 +15,7 @@ class dip:
 
     def convertImageForColorspace(image, color_space):
         '''Convert the image to the requested colorspace'''
-            
+        
         # Convert the image in respect to the requested colorspace
         if color_space != 'RGB':
             if color_space == 'HSV':
@@ -166,7 +166,7 @@ class dip:
                                                              vis=False, feature_vec=True))
                     hog_features = np.ravel(hog_features)
             else:
-                # TODO: investigate colorspace conversion to grayscale
+                # Processing of the LUV image
                 feature_image = cv2.cvtColor(feature_image, cv2.COLOR_LUV2RGB)
                 feature_image = cv2.cvtColor(feature_image, cv2.COLOR_RGB2GRAY)
                 hog_features = dip.get_hog_features(feature_image[:,:], orient,
@@ -360,12 +360,16 @@ class dip:
         #8) Return windows for positive detections
         return on_windows
 
-    # TODO: Generalize for other selections
-    def convert_color(img):
-        return cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
+    def convert_color(img, isVideo=True):
+        '''Convert the image to LUV depending on the source of the image'''
+        
+        if isVideo:
+            return cv2.cvtColor(img, cv2.COLOR_BGR2LUV)
+        else:
+            return cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
 
     def find_cars(img, ystart, ystop, scale, svc, X_scaler, hog_channel,
-                  orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
+                  orient, pix_per_cell, cell_per_block, spatial_size, hist_bins, isVideo=True):
         '''
         Extracts features using hog sub-sampling and make predictions
         Returns the detection boxes coordinates as well as an image showing
@@ -376,7 +380,7 @@ class dip:
         box_list = []
         
         img_tosearch = img[ystart:ystop,:,:]
-        ctrans_tosearch = dip.convert_color(img_tosearch)
+        ctrans_tosearch = dip.convert_color(img_tosearch, isVideo)
         if scale != 1:
             imshape = ctrans_tosearch.shape
             ctrans_tosearch = cv2.resize(ctrans_tosearch, (np.int(imshape[1]/scale), np.int(imshape[0]/scale)))
@@ -495,7 +499,7 @@ class dip:
             bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
             
             # Draw the box on the image
-            cv2.rectangle(img, bbox[0], bbox[1], (0,0,255), 6)
+            cv2.rectangle(img, bbox[0], bbox[1], (255, 0, 0), 6)
         
         # Return the image
         return img

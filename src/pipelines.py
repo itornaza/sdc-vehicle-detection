@@ -70,9 +70,11 @@ class Pipelines:
                                               Prms.PIX_PER_CELL,
                                               Prms.CELL_PER_BLOCK,
                                               Prms.SPATIAL_SIZE,
-                                              Prms.N_BINS)
+                                              Prms.N_BINS,
+                                              isVideo=False)
             
-            plt.imshow(out_img)
+            # Display the results
+            plt.imshow(cv2.cvtColor(out_img, cv2.COLOR_BGR2RGB))
             plt.show()
 
     def heat(svc, X_scaler):
@@ -80,7 +82,7 @@ class Pipelines:
 
         for img in glob.glob('../test_images/test*.jpg'):
             image = cv2.imread(img)
-
+            
             # Create an empty heat map to draw on
             heat = np.zeros_like(image[:,:,0]).astype(np.float)
 
@@ -95,7 +97,8 @@ class Pipelines:
                                                   Prms.PIX_PER_CELL,
                                                   Prms.CELL_PER_BLOCK,
                                                   Prms.SPATIAL_SIZE,
-                                                  Prms.N_BINS)
+                                                  Prms.N_BINS,
+                                                  isVideo=False)
             
             out_img, box_list_mid = dip.find_cars(image,
                                                   Prms.Y_START[Prms.MID],
@@ -107,7 +110,8 @@ class Pipelines:
                                                   Prms.PIX_PER_CELL,
                                                   Prms.CELL_PER_BLOCK,
                                                   Prms.SPATIAL_SIZE,
-                                                  Prms.N_BINS)
+                                                  Prms.N_BINS,
+                                                  isVideo=False)
             
             out_img, box_list_near = dip.find_cars(image,
                                                    Prms.Y_START[Prms.NEAR],
@@ -119,7 +123,8 @@ class Pipelines:
                                                    Prms.PIX_PER_CELL,
                                                    Prms.CELL_PER_BLOCK,
                                                    Prms.SPATIAL_SIZE,
-                                                   Prms.N_BINS)
+                                                   Prms.N_BINS,
+                                                   isVideo=False)
 
             # out_images are discarded at this time
             box_list = box_list_far + box_list_mid + box_list_near
@@ -137,9 +142,10 @@ class Pipelines:
             labels = label(heatmap)
             draw_img = dip.draw_labeled_bboxes(np.copy(image), labels)
 
+            # Display the results
             fig = plt.figure()
             plt.subplot(121)
-            plt.imshow(draw_img)
+            plt.imshow(cv2.cvtColor(draw_img, cv2.COLOR_BGR2RGB))
             plt.title('Car Positions')
             plt.subplot(122)
             plt.imshow(heatmap, cmap='hot')
@@ -191,7 +197,8 @@ class Pipelines:
                                               Prms.PIX_PER_CELL,
                                               Prms.CELL_PER_BLOCK,
                                               Prms.SPATIAL_SIZE,
-                                              Prms.N_BINS)
+                                              Prms.N_BINS,
+                                              isVideo=True)
 
         # Mid field
         out_img, box_list_mid = dip.find_cars(image,
@@ -204,7 +211,8 @@ class Pipelines:
                                               Prms.PIX_PER_CELL,
                                               Prms.CELL_PER_BLOCK,
                                               Prms.SPATIAL_SIZE,
-                                              Prms.N_BINS)
+                                              Prms.N_BINS,
+                                              isVideo=True)
         
         # Near field
         out_img, box_list_near = dip.find_cars(image,
@@ -217,13 +225,12 @@ class Pipelines:
                                                Prms.PIX_PER_CELL,
                                                Prms.CELL_PER_BLOCK,
                                                Prms.SPATIAL_SIZE,
-                                               Prms.N_BINS)
+                                               Prms.N_BINS,
+                                               isVideo=True)
         
         # Append the local and global box list
         box_list = box_list_far + box_list_mid + box_list_near
         Pipelines.frame_group_box_list += box_list
-        # TODO: Investigate changing the previous line with the following?
-        #Pipelines.frame_group_box_list.append(box_list[:])
 
         # Add heat to each box in box list
         heat = dip.add_heat(heat, Pipelines.last_full_box_list)
