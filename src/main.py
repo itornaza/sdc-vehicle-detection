@@ -15,6 +15,10 @@ from moviepy.editor import VideoFileClip
 from os import sys
 from scipy.ndimage.measurements import label
 
+#----------
+# Globals
+#----------
+
 video_in_test = '../test_video.mp4'
 video_in = '../project_video.mp4'
 video_out = '../project_video_output.mp4'
@@ -23,6 +27,10 @@ class Commands(Enum):
     NONE = 0
     DATA = 1
     IMAGE = 2
+
+#------------
+# Functions
+#------------
 
 def help():
     print()
@@ -46,13 +54,17 @@ def parseCommands():
 
     return command
 
+#--------
+# Main
+#--------
+
 if __name__ == '__main__':
     command = parseCommands()
     if command == Commands.DATA:
         print(">>> Setting up dataset and training the classifier")
 
-        # 1) Explore the colorspace
-        Plotting.exploreColorSpace()
+        # 1) Explore the colorspace in debug mode only
+        if Prms.DEBUG: Plotting.exploreColorSpace()
         
         # 2) Get the training and test datasets
         X_train, X_test, y_train, y_test, X_scaler = data_prep(vis=True)
@@ -69,23 +81,26 @@ if __name__ == '__main__':
         svc = My_classifier.load()
         X_scaler = load_scaler()
         
-        # TODO: Uncomment after video ok
-        # 2) Test the classifier on test images
-        #print(">>> Displaying sliding window processed images")
-        #Pipelines.hot_windows(svc, X_scaler, vis=True)
+        # 2) Test the classifier on test images with the sliding window on debug mode
+        if Prms.DEBUG:
+            print(">>> Displaying sliding window processed images")
+            Pipelines.hot_windows(svc, X_scaler, vis=True)
 
-        # TODO: Uncomment after video ok
         # 3) Test classifier and hog sub sampling
-        #print(">>> Displaying sub sampling procesed images")
-        #Pipelines.hog_sub_sampling(svc, X_scaler)
+        print(">>> Displaying sub sampling procesed images")
+        Pipelines.hog_sub_sampling(svc, X_scaler)
 
-        # 4) Use the heatmap
-        print(">>> Displaing the heatmap of the sub sampling prpcessed images")
+        # 4) Use the heatmap on the test images
+        print(">>> Displaing the heatmap of the sub sampling processed images")
         Pipelines.heat(svc, X_scaler)
 
     else:
         print(">>> Running the classifier on video")
+        
+        # 1) Get the video clip for debuging or release
         video = video_in_test if Prms.DEBUG else video_in
+        
+        # 2) Run the video through the pipeline
         clip = VideoFileClip(video)
-        white_clip = clip.fl_image(Pipelines.video_pipeline)
+        white_clip = clip.fl_image(Pipelines.video_pipeline)#.subclip(30, 40)
         white_clip.write_videofile(video_out, audio=False)
