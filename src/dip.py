@@ -482,7 +482,7 @@ class dip:
                     win_draw = np.int(window*scale)
 
                     # Draw the box on the image
-                    cv2.rectangle(draw_img,(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart),(255,0,0),6)
+                    cv2.rectangle(draw_img,(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart),Prms.LINE_COLOR,Prms.LINE_THICKNESS)
 
                     # Extract the bbox coordinates
                     box = (xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart)
