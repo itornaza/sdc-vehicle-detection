@@ -28,7 +28,9 @@ The project source can be found in the `./src` directory.
 To run the main program use the following options: 
 
 `python main.py -d` builds up the dataset and trains an SVC classifier.
+
 `python main.py -i` runs the vehicle detection pipline on the test images found in `./test_images`. All images in the following analysis are created with th `-i` option.
+
 `python main.py` runs the vehicle detection pipeline on the `./project_video.mp4` and saves the resulting video with the detectied vehicles in the `./project_video_output.mp4`.
 
 ###Histogram of Oriented Gradients (HOG)
