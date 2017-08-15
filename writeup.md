@@ -14,7 +14,7 @@ The project rubric can be found [here](https://review.udacity.com/#!/rubrics/513
 [//]: # (Image References)
 [image1]: ./output_images/car_notcar.png
 [image2]: ./output_images/car_hog.png
-[image3]: ./examples/sliding_windows.jpg
+[image3]: ./output_images/terminal_training.png
 [image4]: ./examples/sliding_window.jpg
 [image5]: ./examples/bboxes_and_heat.png
 [image6]: ./examples/labels_map.png
@@ -40,6 +40,7 @@ All the code that handles the dataset can be found in the `./src/data_prep.py`. 
 * Get the car and notcar images from the dataset directories
 * Get the car image features
 * Get the not car images features
+* Include the flipped images to augment the dataset
 * Combine and normalize the features
 * Split the dataset into training and test sets
 
@@ -49,7 +50,7 @@ All the functions that are related to digital image processing, transformations 
 
 #### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
-The car and not car image features for training are extracted by calling the extract_features() method of the dip class that uses the combined_features() and get_hog_features() methods of the same class as a helper routines.  
+The car and not car image features for training are extracted by calling the extract_features() method of the `dip` class that uses the `combined_features()` and `get_hog_features()` methods of the same class as a helper routines.  
 
 I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
 
@@ -67,11 +68,17 @@ Here is an example using the `YCrCb` color space and HOG parameters of:
 
 #### 2. Explain how you settled on your final choice of HOG parameters.
 
-I tried various combinations of parameters and...
+I tried various combinations of parameters such as `LUV` colorspace with `orientations=8` and `hog_channel=0`, but the black car was very difficult to be detected. Once I set the `ALL` parameter for the `hog_channel` the detection became much more efficient.
 
 #### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear SVM using...
+I trained a linear SVM using the `Classifier` class found in the `./src/classifier.py` file. To speed up development I used the `classifier.pkl` file to store the trained classifier and load it from there as I needed it for the next steps.
+
+For the training of the classifier, a 32 x 32 spatial filter and histogram of 32 bins was used in conjuction with the hog features. The respective functions can be found in the `dip` class and the `bin_spatial()` and `color_hist()` methods.
+
+Thw following figure shows an example run of the classifier training:
+
+![alt text][image3]
 
 ### Sliding Window Search
 
