@@ -15,10 +15,13 @@ The project rubric can be found [here](https://review.udacity.com/#!/rubrics/513
 [image1]: ./output_images/car_notcar.png
 [image2]: ./output_images/car_hog.png
 [image3]: ./output_images/terminal_training.png
-[image4]: ./examples/sliding_window.jpg
-[image5]: ./examples/bboxes_and_heat.png
-[image6]: ./examples/labels_map.png
-[image7]: ./examples/output_bboxes.png
+[image4]: ./output_images/test2search.png
+[image5]: ./output_images/test1hog.png
+[image6]: ./output_images/test2hog.png
+[image7]: ./output_images/test3hog.png
+[image8]: ./output_images/test4hog.png
+[image9]: ./output_images/test5hog.png
+[image10]: ./output_images/test6hog.png
 
 ---
 ### Writeup / README
@@ -84,15 +87,26 @@ Thw following figure shows an example run of the classifier training:
 
 #### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
+I decided to use the sliding window technique with hog sub sampling to improve the efficiency of the pipeline found in the `find_cars()` method of the `dip` class. I decided to use the following segments of the image for searching as shown in the next figure:
 
-![alt text][image3]
+* For the **blue segment** that represents the far field and the cars appear to be smaller. Search is done  from 400 to 500 pixels in the y-axis and from 330 pixels to 1280 pixels for the x-axis with an  overlapping factor of 1.0. The x-axis masking is implemented to avoid the opposing lane cars to be detected for this project.
+
+* The **green segment** that represents the mid range field. Search is done from 400 to 600 pixels in the y-axis and from 160 pixels to 1280 pixels for the x-axis with an  overlapping factor of 1.5. The x-axis masking once again, is implemented to avoid the opposing lane cars to be detected for this project.
+
+* For the **red segment** represents the near field and the cars appear to be bigger. Search is done  from 500 to 650 pixels in the y-axis and from 0 pixels to 1280 pixels for the x-axis with an  overlapping factor of 2.5.
+
+![alt text][image4]
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
 Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
 
-![alt text][image4]
+![alt text][image5]
+![alt text][image6]
+![alt text][image7]
+![alt text][image8]
+![alt text][image9]
+![alt text][image10]
 ---
 
 ### Video Implementation
