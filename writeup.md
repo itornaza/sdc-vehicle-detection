@@ -13,7 +13,7 @@ The project rubric can be found [here](https://review.udacity.com/#!/rubrics/513
 
 [//]: # (Image References)
 [image1]: ./output_images/car_notcar.png
-[image2]: ./examples/HOG_example.jpg
+[image2]: ./output_images/car_hog.png
 [image3]: ./examples/sliding_windows.jpg
 [image4]: ./examples/sliding_window.jpg
 [image5]: ./examples/bboxes_and_heat.png
@@ -57,8 +57,11 @@ I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an 
 
 I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
 
-Here is an example using the `YCrCb` color space and HOG parameters of `orientations=9`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
-
+Here is an example using the `YCrCb` color space and HOG parameters of: 
+* `hog_channel='ALL'`
+* `orientations=9` 
+* `pixels_per_cell=(8, 8)`
+* `cells_per_block=(2, 2)`
 
 ![alt text][image2]
 
