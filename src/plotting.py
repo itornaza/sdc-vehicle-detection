@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+from dip import dip
+
 class Plotting():
 
     def plot3d(pixels, colors_rgb, axis_labels=list("RGB"), axis_limits=[(0, 255), (0, 255), (0, 255)]):
@@ -36,7 +38,7 @@ class Plotting():
         '''Explore the color space of an image to detect vehicles'''
 
         # Read a color image
-        img = cv2.imread("../test_images/test1.jpg")
+        img = dip.image_read("../test_images/test1.jpg")
 
         # Select a small fraction of pixels to plot by subsampling it
         scale = max(img.shape[0], img.shape[1], 64) / 64  # at most 64 rows and columns

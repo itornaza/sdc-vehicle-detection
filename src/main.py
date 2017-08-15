@@ -35,8 +35,8 @@ class Commands(Enum):
 def help():
     print()
     print("> -d: Dataset set up and classifier training")
-    print("> -i: Test the classifier on images")
-    print("> Run the classifier on video")
+    print("> -i: Test the classifier on test images")
+    print("> Run the vehicle detection on video")
     print()
 
 def parseCommands():
@@ -102,5 +102,7 @@ if __name__ == '__main__':
         
         # 2) Run the video through the pipeline
         clip = VideoFileClip(video)
-        white_clip = clip.fl_image(Pipelines.video_pipeline)#.subclip(30, 40)
+        white_clip = clip.fl_image(Pipelines.video_pipeline).subclip(
+                                                                     Prms.SUBCLIP[0],
+                                                                     Prms.SUBCLIP[1])
         white_clip.write_videofile(video_out, audio=False)
