@@ -36,7 +36,7 @@ The project source code can be found in the `./src` directory. To run the main p
 
 * `python main.py -d` builds up the dataset and trains an SVC classifier
 
-* `python main.py -i` runs the vehicle detection pipline on the test images found in `./test_images`. All images in the following analysis are created with th `-i` option
+* `python main.py -i` runs the vehicle detection pipline on the test images found in `./test_images`. All images in the following analysis are generated with the `-i` option
 
 * `python main.py` runs the vehicle detection pipeline on the `./project_video.mp4` and saves the resulting video with the detectied vehicles in the `./project_video_output.mp4`
 
@@ -46,22 +46,22 @@ Note: The parameters for the hog, heatmap and classifier training are convenient
 
 The dataset is built from the GTI and KITTI car databases found in the `./dataset` directory. All the images contained in this set are in PNG format.
 
-All the code that handles the dataset can be found in the `./src/data_prep.py`. The main handler is the data_prep() function on line 209 which in turn calls the internal functions in order to:
+All the code that handles the dataset can be found in the `./src/data_prep.py`. The main handler is the `data_prep()` function on line 209 which in turn calls the internal functions in order to:
 
 * Get the car and notcar images from the dataset directories
-* Get the car image features
+* Get the car images features
 * Get the not car images features
 * Include the flipped images to augment the dataset
 * Combine and normalize the features
 * Split the dataset into training and test sets
 
-All the functions that are related to digital image processing, transformations and vehicle detection are located in the dip class found in the `./src/dip.py` file.
+All the functions that are related to digital image processing, transformations and vehicle detection are located in the `dip` class found in the `./src/dip.py` file.
 
 ### Histogram of Oriented Gradients (HOG)
 
 #### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
-The car and not car image features for training are extracted by calling the extract_features() method of the `dip` class that uses the `combined_features()` and `get_hog_features()` methods of the same class as a helper routines.  
+The car and not car image features for training are extracted by calling the `extract_features()` method of the `dip` class that uses the `combined_features()` and `get_hog_features()` methods of the same class as a helper routines.  
 
 I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
 
@@ -107,7 +107,7 @@ I decided to use the sliding window technique with hog sub sampling to improve t
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
+Ultimately I searched on three scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
 
 ![alt text][image5]
 ![alt text][image6]
@@ -127,9 +127,9 @@ The pipeline for the video can be found in the `Pipelines` class and the `video_
 
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
-I recorded the positions of positive detections in each frame of the video. From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  the `lanel` function is called at the line 238 of the `video_pipeline()` method of the `Pipelines` class. I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
+I recorded the positions of positive detections in each frame of the video. From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  the `label` function is called at the line 238 of the `video_pipeline()` method of the `Pipelines` class. I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
 
-Following is an example of the heatmap application on the test images:
+Following is an example of the heatmap application on the test images as well as the display of the bounding boxes around the cars:
 
 ![alt text][image11]
 ![alt text][image12]
