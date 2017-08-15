@@ -49,7 +49,7 @@ class Pipelines:
                                              hog_feat=Prms.HOG_FEAT)
                     
             # Plot the vehicle detection image
-            window_img = dip.draw_boxes(draw_image, hot_windows, color=(255, 0, 0), thick=6)
+            window_img = dip.draw_boxes(draw_image, hot_windows, color=Prms.LINE_COLOR, thick=Prms.LINE_THICKNESS)
             plt.imshow(window_img)
             plt.show()
 
