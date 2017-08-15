@@ -22,12 +22,12 @@ The project rubric can be found [here](https://review.udacity.com/#!/rubrics/513
 [image8]: ./output_images/test4hog.png
 [image9]: ./output_images/test5hog.png
 [image10]: ./output_images/test6hog.png
-[image11]: ./output_images/test1heatmap.png
-[image12]: ./output_images/test2heatmap.png
-[image13]: ./output_images/test3heatmap.png
-[image14]: ./output_images/test4heatmap.png
-[image15]: ./output_images/test5heatmap.png
-[image16]: ./output_images/test6heatmap.png
+[image11]: ./output_images/test1heat.png
+[image12]: ./output_images/test2heat.png
+[image13]: ./output_images/test3heat.png
+[image14]: ./output_images/test4heat.png
+[image15]: ./output_images/test5heat.png
+[image16]: ./output_images/test6heat.png
 
 ---
 ### Writeup / README
