@@ -212,7 +212,7 @@ def data_prep(vis=True):
     # 1) Get the car and notcar images from the dataset directories
     cars, notcars = _get_data_from_file()
     
-    # 2.1) Get the for the car image features using the global parameters set in Prms class
+    # 2.1) Get the car image features using the global parameters set in Prms class
     car_features = dip.extract_features(cars, color_space=Prms.COLORSPACE,
                                         spatial_size=Prms.SPATIAL_SIZE,
                                         hist_bins=Prms.N_BINS,
