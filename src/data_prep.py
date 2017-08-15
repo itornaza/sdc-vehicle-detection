@@ -60,7 +60,7 @@ def _data_look(car_list, notcar_list):
     data_dict["n_notcars"] = len(notcar_list)
     
     # Read in a test image, either car or notcar
-    example_img = cv2.imread(car_list[0])
+    example_img = dip.read_image(car_list[0])
     
     # Define a key "image_shape" and store the test image shape 3-tuple
     data_dict["image_shape"] = example_img.shape
@@ -82,8 +82,8 @@ def _get_random_images(cars, notcars):
     notcar_ind = np.random.randint(0, len(notcars))
     
     # Read in car / not-car images
-    car_image = cv2.imread(cars[car_ind])
-    notcar_image = cv2.imread(notcars[notcar_ind])
+    car_image = dip.read_image(cars[car_ind])
+    notcar_image = dip.read_image(notcars[notcar_ind])
 
     # Return the images and the random index as well
     return car_image, notcar_image, car_ind

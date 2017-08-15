@@ -13,10 +13,14 @@ from parameters import Prms
 class dip:
     '''Digital Image Processing functions for vehicle detection'''
 
+    def read_image(img):
+        '''Returns an RGB image scaled from (0, 255) using cv2'''
+        image = cv2.imread(img)
+        return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    
     def convertImageForColorspace(image, color_space):
         '''Convert the image to the requested colorspace'''
         
-        # Convert the image in respect to the requested colorspace
         if color_space != 'RGB':
             if color_space == 'HSV':
                 feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
@@ -31,6 +35,26 @@ class dip:
         else: feature_image = np.copy(image)
         
         # Return the converted image
+        return feature_image
+
+    def colorspace2RGB(image, color_space):
+        '''Convert the image back to RGB'''
+            
+        # Convert the image to RGB from the its original colorspace
+        if color_space != 'RGB':
+            if color_space == 'HSV':
+                feature_image = cv2.cvtColor(image, cv2.COLOR_HSV2RGB)
+            elif color_space == 'LUV':
+                feature_image = cv2.cvtColor(image, cv2.COLOR_LUV2RGB)
+            elif color_space == 'HLS':
+                feature_image = cv2.cvtColor(image, cv2.COLOR_HLS2RGB)
+            elif color_space == 'YUV':
+                feature_image = cv2.cvtColor(image, cv2.COLOR_YUV2RGB)
+            elif color_space == 'YCrCb':
+                feature_image = cv2.cvtColor(image, cv2.COLOR_YCrCb2RGB)
+        else: feature_image = np.copy(image)
+        
+        # Return the RGB image
         return feature_image
 
     def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
@@ -67,7 +91,7 @@ class dip:
         # Iterate through template list
         for temp in template_list:
             # Read in templates one by one
-            tmp = cv2.imread(temp)
+            tmp = dip.read_image(temp)
             
             # Use cv2.matchTemplate() to search the image
             result = cv2.matchTemplate(img, tmp, method)
@@ -160,14 +184,18 @@ class dip:
         if hog_feat == True:
             if hog_channel == 'ALL':
                 hog_features = []
-                for channel in range(feature_image.shape[2]):
-                    hog_features.append(dip.get_hog_features(feature_image[:,:,channel],
-                                                             orient, pix_per_cell, cell_per_block,
-                                                             vis=False, feature_vec=True))
-                    hog_features = np.ravel(hog_features)
+                hog_feat1 = dip.get_hog_features(feature_image[:,:,0],
+                                                 orient, pix_per_cell, cell_per_block,
+                                                 vis=False, feature_vec=True)
+                hog_feat2 = dip.get_hog_features(feature_image[:,:,1],
+                                                 orient, pix_per_cell, cell_per_block,
+                                                 vis=False, feature_vec=True)
+                hog_feat3 = dip.get_hog_features(feature_image[:,:,2],
+                                                 orient, pix_per_cell, cell_per_block,
+                                                 vis=False, feature_vec=True)
+                hog_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
             else:
-                # Processing of the LUV image
-                feature_image = cv2.cvtColor(feature_image, cv2.COLOR_LUV2RGB)
+                feature_image = dip.colorspace2RGB(feature_image, Prms.COLORSPACE)
                 feature_image = cv2.cvtColor(feature_image, cv2.COLOR_RGB2GRAY)
                 hog_features = dip.get_hog_features(feature_image[:,:], orient,
                                                     pix_per_cell, cell_per_block, vis=False,
@@ -189,7 +217,7 @@ class dip:
         # Iterate through the list of images
         for file_p in imgs:
             file_features = []
-            image = cv2.imread(file_p)
+            image = dip.read_image(file_p)
 
             # Convert the image to the selected colorspace
             feature_image = dip.convertImageForColorspace(image, color_space)
@@ -360,27 +388,26 @@ class dip:
         #8) Return windows for positive detections
         return on_windows
 
-    def convert_color(img, isVideo=True):
-        '''Convert the image to LUV depending on the source of the image'''
-        
-        if isVideo:
-            return cv2.cvtColor(img, cv2.COLOR_BGR2LUV)
-        else:
-            return cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
-
     def find_cars(img, ystart, ystop, scale, svc, X_scaler, hog_channel,
-                  orient, pix_per_cell, cell_per_block, spatial_size, hist_bins, isVideo=True):
+                  orient, pix_per_cell, cell_per_block, spatial_size, hist_bins,
+                  xstart=0, xstop=1280):
         '''
         Extracts features using hog sub-sampling and make predictions
         Returns the detection boxes coordinates as well as an image showing
         the cars that are detected
         '''
         
+        # Caution: If the image is comming from the video it is RGB. However, if the
+        # image is imported with cv2 it is BGR. This logic is captured in the
+        # convert_color() function above.
+        
         draw_img = np.copy(img)
         box_list = []
         
-        img_tosearch = img[ystart:ystop,:,:]
-        ctrans_tosearch = dip.convert_color(img_tosearch, isVideo)
+        # Crop the image to the prefered search area
+        img_tosearch = img[ystart:ystop,xstart:xstop,:]
+        ctrans_tosearch = dip.convertImageForColorspace(img_tosearch, Prms.COLORSPACE)
+        
         if scale != 1:
             imshape = ctrans_tosearch.shape
             ctrans_tosearch = cv2.resize(ctrans_tosearch, (np.int(imshape[1]/scale), np.int(imshape[0]/scale)))
@@ -450,7 +477,7 @@ class dip:
                 test_prediction = svc.predict(test_features)
                 
                 if test_prediction == 1:
-                    xbox_left = np.int(xleft*scale)
+                    xbox_left = np.int(xleft*scale)+xstart
                     ytop_draw = np.int(ytop*scale)
                     win_draw = np.int(window*scale)
 
@@ -476,7 +503,7 @@ class dip:
             heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0]] += 1
         
         # Return updated heatmap
-        return heatmap# Iterate through list of bboxes
+        return heatmap # Iterate through list of bboxes
 
     def apply_threshold(heatmap, threshold):
         # Zero out pixels below the threshold
@@ -499,7 +526,7 @@ class dip:
             bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
             
             # Draw the box on the image
-            cv2.rectangle(img, bbox[0], bbox[1], (255, 0, 0), 6)
+            cv2.rectangle(img, bbox[0], bbox[1], Prms.LINE_COLOR, Prms.LINE_THICKNESS)
         
         # Return the image
         return img

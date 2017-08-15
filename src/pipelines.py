@@ -23,7 +23,7 @@ class Pipelines:
         '''Check the classifier by applying the vehicle detection to the test images'''
 
         for img in glob.glob('../test_images/test*.jpg'):
-            image = cv2.imread(img)
+            image = dip.read_image(img)
             draw_image = np.copy(image)
 
             windows = dip.slide_window(image,
@@ -57,7 +57,7 @@ class Pipelines:
         '''Apply hog sub-sampling to an image to locate cars with one search'''
 
         for img in glob.glob('../test_images/test*.jpg'):
-            image = cv2.imread(img)
+            image = dip.read_image(img)
             
             # Just run for the middle distance detection
             out_img, box_list = dip.find_cars(image,
@@ -70,18 +70,17 @@ class Pipelines:
                                               Prms.PIX_PER_CELL,
                                               Prms.CELL_PER_BLOCK,
                                               Prms.SPATIAL_SIZE,
-                                              Prms.N_BINS,
-                                              isVideo=False)
+                                              Prms.N_BINS)
             
             # Display the results
-            plt.imshow(cv2.cvtColor(out_img, cv2.COLOR_BGR2RGB))
+            plt.imshow(out_img)
             plt.show()
 
     def heat(svc, X_scaler):
         '''Apply a heat map on the test images to validate performance'''
 
         for img in glob.glob('../test_images/test*.jpg'):
-            image = cv2.imread(img)
+            image = dip.read_image(img)
             
             # Create an empty heat map to draw on
             heat = np.zeros_like(image[:,:,0]).astype(np.float)
@@ -97,8 +96,7 @@ class Pipelines:
                                                   Prms.PIX_PER_CELL,
                                                   Prms.CELL_PER_BLOCK,
                                                   Prms.SPATIAL_SIZE,
-                                                  Prms.N_BINS,
-                                                  isVideo=False)
+                                                  Prms.N_BINS)
             
             out_img, box_list_mid = dip.find_cars(image,
                                                   Prms.Y_START[Prms.MID],
@@ -110,8 +108,7 @@ class Pipelines:
                                                   Prms.PIX_PER_CELL,
                                                   Prms.CELL_PER_BLOCK,
                                                   Prms.SPATIAL_SIZE,
-                                                  Prms.N_BINS,
-                                                  isVideo=False)
+                                                  Prms.N_BINS)
             
             out_img, box_list_near = dip.find_cars(image,
                                                    Prms.Y_START[Prms.NEAR],
@@ -123,8 +120,7 @@ class Pipelines:
                                                    Prms.PIX_PER_CELL,
                                                    Prms.CELL_PER_BLOCK,
                                                    Prms.SPATIAL_SIZE,
-                                                   Prms.N_BINS,
-                                                   isVideo=False)
+                                                   Prms.N_BINS)
 
             # out_images are discarded at this time
             box_list = box_list_far + box_list_mid + box_list_near
@@ -145,7 +141,7 @@ class Pipelines:
             # Display the results
             fig = plt.figure()
             plt.subplot(121)
-            plt.imshow(cv2.cvtColor(draw_img, cv2.COLOR_BGR2RGB))
+            plt.imshow(draw_img)
             plt.title('Car Positions')
             plt.subplot(122)
             plt.imshow(heatmap, cmap='hot')
@@ -182,9 +178,6 @@ class Pipelines:
         # Create an empty heat map to draw on
         heat = np.zeros_like(image[:,:,0]).astype(np.float)
         
-        ####################
-        # TODO: Check how the image is converted to what colorspace?
-        # TODO: Mask for the x axis as well
         # Get the box list from using the hog sub sampling technique
         # For the far field
         out_img, box_list_far = dip.find_cars(image,
@@ -198,7 +191,7 @@ class Pipelines:
                                               Prms.CELL_PER_BLOCK,
                                               Prms.SPATIAL_SIZE,
                                               Prms.N_BINS,
-                                              isVideo=True)
+                                              Prms.X_START[Prms.FAR])
 
         # Mid field
         out_img, box_list_mid = dip.find_cars(image,
@@ -212,7 +205,7 @@ class Pipelines:
                                               Prms.CELL_PER_BLOCK,
                                               Prms.SPATIAL_SIZE,
                                               Prms.N_BINS,
-                                              isVideo=True)
+                                              Prms.X_START[Prms.MID])
         
         # Near field
         out_img, box_list_near = dip.find_cars(image,
@@ -226,7 +219,7 @@ class Pipelines:
                                                Prms.CELL_PER_BLOCK,
                                                Prms.SPATIAL_SIZE,
                                                Prms.N_BINS,
-                                               isVideo=True)
+                                               Prms.X_START[Prms.NEAR])
         
         # Append the local and global box list
         box_list = box_list_far + box_list_mid + box_list_near
