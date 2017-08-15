@@ -28,6 +28,7 @@ The project rubric can be found [here](https://review.udacity.com/#!/rubrics/513
 [image14]: ./output_images/test4heat.png
 [image15]: ./output_images/test5heat.png
 [image16]: ./output_images/test6heat.png
+[image17]: ./output_images/normalized_features.png
 
 ---
 ### Writeup / README
@@ -55,7 +56,10 @@ All the code that handles the dataset can be found in the `./src/data_prep.py`. 
 * Combine and normalize the features
 * Split the dataset into training and test sets
 
-All the functions that are related to digital image processing, transformations and vehicle detection are located in the `dip` class found in the `./src/dip.py` file.
+Note that all the functions that are related to digital image processing, transformations and vehicle detection are located in the `dip` class found in the `./src/dip.py` file.
+
+The features normalization can be visualized in the following figure
+![alt text][image17]
 
 ### Histogram of Oriented Gradients (HOG)
 
