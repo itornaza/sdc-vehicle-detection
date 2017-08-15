@@ -22,6 +22,12 @@ The project rubric can be found [here](https://review.udacity.com/#!/rubrics/513
 [image8]: ./output_images/test4hog.png
 [image9]: ./output_images/test5hog.png
 [image10]: ./output_images/test6hog.png
+[image11]: ./output_images/test1heatmap.png
+[image12]: ./output_images/test2heatmap.png
+[image13]: ./output_images/test3heatmap.png
+[image14]: ./output_images/test4heatmap.png
+[image15]: ./output_images/test5heatmap.png
+[image16]: ./output_images/test6heatmap.png
 
 ---
 ### Writeup / README
@@ -33,6 +39,8 @@ The project source code can be found in the `./src` directory. To run the main p
 * `python main.py -i` runs the vehicle detection pipline on the test images found in `./test_images`. All images in the following analysis are created with th `-i` option
 
 * `python main.py` runs the vehicle detection pipeline on the `./project_video.mp4` and saves the resulting video with the detectied vehicles in the `./project_video_output.mp4`
+
+Note: The parameters for the hog, heatmap and classifier training are conveniently put in the `parameters.py` file for centralised control.
 
 ### Dataset preparation
 
@@ -111,33 +119,36 @@ Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spat
 
 ### Video Implementation
 
-#### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
+#### 1. Provide a link to your final video output. Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
+
 Here's the youtube [link](https://youtu.be/XEPEyQidjjw) to the video
 
+The pipeline for the video can be found in the `Pipelines` class and the `video_pipeline()` method found in the `./src/pipelines.py` file.
 
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
-I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
+I recorded the positions of positive detections in each frame of the video. From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  the `lanel` function is called at the line 238 of the `video_pipeline()` method of the `Pipelines` class. I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
 
-Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
+Following is an example of the heatmap application on the test images:
 
-### Here are six frames and their corresponding heatmaps:
+![alt text][image11]
+![alt text][image12]
+![alt text][image13]
+![alt text][image14]
+![alt text][image15]
+![alt text][image16]
 
-![alt text][image5]
-
-### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
-![alt text][image6]
-
-### Here the resulting bounding boxes are drawn onto the last frame in the series:
-![alt text][image7]
-
-
-
----
+To avoid false positives, I used an averaging of 10 frames with a threshold of 28 for the heatmap. This provided a video for the vehicle detection with minimal false positives.
 
 ### Discussion
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+* I used the SVC for classifying the vehicles. While this is a fast and efficient method, it has its limitations. Maybe a more sophisticated deep learning technique like YOLO is required for more robust results  
+
+* Hog only worked properly when all channels where used. Whenever I used channel 0 only, the black car was very poorly detected, and the amount of false positives was far more than acceptable.
+
+* The pipeline is crafted for the non-British style driving where the vehicles drive on the right side of the road.
+
+* In order to avoid problems with reading PNG images and having them in the 0-255 range, I created a function in the `dip` class called `read_image()` to import PNG images using OpenCV and convert them to RGB format to be consistent both with the test images and the video. In that way I was able to have the PNGs both as RGB and 0-255. That may seem natural to implement, but it took me a while to handle the image loading consistently.
 
