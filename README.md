@@ -58,7 +58,7 @@ All the code that handles the dataset can be found in the `./src/data_prep.py`. 
 
 Note that all the functions that are related to digital image processing, transformations and vehicle detection are located in the `dip` class found in the `./src/dip.py` file.
 
-The features normalization can be visualized in the following figure
+The features normalization can be visualized in the following figure.
 ![alt text][image17]
 
 ### Histogram of Oriented Gradients (HOG)
@@ -125,7 +125,7 @@ Ultimately I searched on three scales using YCrCb 3-channel HOG features plus sp
 
 #### 1. Provide a link to your final video output. Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
 
-Here's the youtube [link](https://youtu.be/XEPEyQidjjw) to the video
+Here's the youtube [link](https://youtu.be/XEPEyQidjjw) to the video.
 
 The pipeline for the video can be found in the `Pipelines` class and the `video_pipeline()` method found in the `./src/pipelines.py` file.
 
@@ -148,7 +148,7 @@ To avoid false positives, I used an averaging of 10 frames with a threshold of 2
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-* I used the SVC for classifying the vehicles. While this is a fast and efficient method, it has its limitations. Maybe a more sophisticated deep learning technique like YOLO is required for more robust results  
+* I used the SVC for classifying the vehicles. While this is a fast and efficient method, it has its limitations. Maybe a more sophisticated deep learning technique like YOLO is required for more robust results.  
 
 * Hog only worked properly when all channels where used. Whenever I used channel 0 only, the black car was very poorly detected, and the amount of false positives was far more than acceptable.
 
